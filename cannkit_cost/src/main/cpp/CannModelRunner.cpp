@@ -48,59 +48,108 @@ OH_NN_ReturnCode CannModelRunner::Initialize(std::string &message)
 
 OH_NN_ReturnCode CannModelRunner::Load(const uint8_t *modelData, size_t modelSize, std::string &message)
 {
+    OH_LOG_INFO(LOG_APP, "Load begin, modelSize=%{public}zu, initialized=%{public}d",
+        modelSize, initialized_ ? 1 : 0);
     if (!initialized_) {
+        OH_LOG_INFO(LOG_APP, "Load requires device initialization");
         OH_NN_ReturnCode result = Initialize(message);
         if (result != OH_NN_SUCCESS) {
+            OH_LOG_ERROR(LOG_APP, "Load failed at Initialize, code=%{public}d, message=%{public}s",
+                result, message.c_str());
             return result;
         }
+        OH_LOG_INFO(LOG_APP, "Device initialization completed, deviceId=%{public}zu", deviceId_);
     }
     if (modelData == nullptr || modelSize == 0) {
         message = "模型数据为空";
+        OH_LOG_ERROR(LOG_APP, "Load rejected invalid model data, dataIsNull=%{public}d, modelSize=%{public}zu",
+            modelData == nullptr ? 1 : 0, modelSize);
         return OH_NN_INVALID_PARAMETER;
     }
 
+    OH_LOG_INFO(LOG_APP, "Releasing previously loaded model resources");
     Unload();
+    OH_LOG_INFO(LOG_APP, "Checking offline model compatibility");
     HiAI_Compatibility compatibility = HMS_HiAICompatibility_CheckFromBuffer(modelData, modelSize);
-    OH_LOG_INFO(LOG_APP, "Model compatibility: %{public}d", compatibility);
+    OH_LOG_INFO(LOG_APP, "Compatibility check completed, compatibility=%{public}d",
+        static_cast<int>(compatibility));
 
+    OH_LOG_INFO(LOG_APP, "Constructing compilation from offline model buffer");
     OH_NNCompilation *compilation =
         OH_NNCompilation_ConstructWithOfflineModelBuffer(modelData, modelSize);
     if (compilation == nullptr) {
         message = "创建模型编译实例失败";
+        OH_LOG_ERROR(LOG_APP, "Load failed at ConstructWithOfflineModelBuffer");
         return OH_NN_FAILED;
     }
+    OH_LOG_INFO(LOG_APP, "Compilation constructed successfully");
 
+    OH_LOG_INFO(LOG_APP, "Setting compilation device, deviceId=%{public}zu", deviceId_);
     OH_NN_ReturnCode result = OH_NNCompilation_SetDevice(compilation, deviceId_);
-    if (result == OH_NN_SUCCESS) {
-        HiAI_ExecuteDevice devices[] = {HiAI_ExecuteDevice::HIAI_EXECUTE_DEVICE_NPU};
-        result = HMS_HiAIOptions_SetModelDeviceOrder(compilation, devices, 1);
-    }
-    if (result == OH_NN_SUCCESS) {
-        result = HMS_HiAIOptions_SetBandMode(compilation, HiAI_BandMode::HIAI_BANDMODE_NORMAL);
-    }
-    if (result == OH_NN_SUCCESS) {
-        result = OH_NNCompilation_Build(compilation);
-    }
-    if (result == OH_NN_SUCCESS) {
-        executor_ = OH_NNExecutor_Construct(compilation);
-        if (executor_ == nullptr) {
-            result = OH_NN_FAILED;
-        }
-    }
-    OH_NNCompilation_Destroy(&compilation);
-
     if (result != OH_NN_SUCCESS) {
-        message = "模型编译或执行器创建失败，错误码: " + std::to_string(result);
-        Unload();
+        message = "设置模型编译设备失败，错误码: " + std::to_string(result);
+        OH_LOG_ERROR(LOG_APP, "Load failed at SetDevice, deviceId=%{public}zu, code=%{public}d",
+            deviceId_, result);
+        OH_NNCompilation_Destroy(&compilation);
         return result;
     }
+    OH_LOG_INFO(LOG_APP, "Compilation device configured");
 
+    OH_LOG_INFO(LOG_APP, "Setting model execution order to NPU");
+    HiAI_ExecuteDevice devices[] = {HiAI_ExecuteDevice::HIAI_EXECUTE_DEVICE_NPU};
+    result = HMS_HiAIOptions_SetModelDeviceOrder(compilation, devices, 1);
+    if (result != OH_NN_SUCCESS) {
+        message = "设置模型 NPU 执行顺序失败，错误码: " + std::to_string(result);
+        OH_LOG_ERROR(LOG_APP, "Load failed at SetModelDeviceOrder, code=%{public}d", result);
+        OH_NNCompilation_Destroy(&compilation);
+        return result;
+    }
+    OH_LOG_INFO(LOG_APP, "Model execution order configured");
+
+    OH_LOG_INFO(LOG_APP, "Setting band mode to NORMAL");
+    result = HMS_HiAIOptions_SetBandMode(compilation, HiAI_BandMode::HIAI_BANDMODE_NORMAL);
+    if (result != OH_NN_SUCCESS) {
+        message = "设置 BandMode 失败，错误码: " + std::to_string(result);
+        OH_LOG_ERROR(LOG_APP, "Load failed at SetBandMode, code=%{public}d", result);
+        OH_NNCompilation_Destroy(&compilation);
+        return result;
+    }
+    OH_LOG_INFO(LOG_APP, "Band mode configured");
+
+    OH_LOG_INFO(LOG_APP, "Building model compilation");
+    result = OH_NNCompilation_Build(compilation);
+    if (result != OH_NN_SUCCESS) {
+        message = "模型编译失败，错误码: " + std::to_string(result);
+        OH_LOG_ERROR(LOG_APP, "Load failed at Compilation_Build, code=%{public}d", result);
+        OH_NNCompilation_Destroy(&compilation);
+        return result;
+    }
+    OH_LOG_INFO(LOG_APP, "Model compilation built successfully");
+
+    OH_LOG_INFO(LOG_APP, "Constructing model executor");
+    executor_ = OH_NNExecutor_Construct(compilation);
+    OH_NNCompilation_Destroy(&compilation);
+    OH_LOG_INFO(LOG_APP, "Compilation instance destroyed after executor construction");
+    if (executor_ == nullptr) {
+        message = "创建模型执行器失败";
+        OH_LOG_ERROR(LOG_APP, "Load failed at Executor_Construct");
+        Unload();
+        return OH_NN_FAILED;
+    }
+    OH_LOG_INFO(LOG_APP, "Model executor constructed successfully");
+
+    OH_LOG_INFO(LOG_APP, "Creating model input and output tensors");
     result = CreateTensors(message);
     if (result != OH_NN_SUCCESS) {
+        OH_LOG_ERROR(LOG_APP, "Load failed at CreateTensors, code=%{public}d, message=%{public}s",
+            result, message.c_str());
         Unload();
         return result;
     }
     message = "模型加载及输入输出 Tensor 创建成功";
+    OH_LOG_INFO(LOG_APP,
+        "Load completed successfully, deviceId=%{public}zu, inputCount=%{public}zu, outputCount=%{public}zu",
+        deviceId_, inputTensors_.size(), outputTensors_.size());
     return OH_NN_SUCCESS;
 }
 
