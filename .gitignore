@@ -10,3 +10,5 @@
 /.clang-tidy
 **/.test
 /.appanalyzer
+docs/models
+docs/prompts.txt
