@@ -1,0 +1,11 @@
+{
+  "name": "cannkit_cost",
+  "version": "1.0.0",
+  "description": "CANN Kit model inference benchmark components.",
+  "main": "Index.ets",
+  "author": "",
+  "license": "",
+  "dependencies": {
+    "libcannkit_cost.so": "file:./src/main/cpp/types/libcannkit_cost"
+  }
+}

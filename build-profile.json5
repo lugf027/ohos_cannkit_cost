@@ -1,6 +1,20 @@
 {
   "app": {
-    "signingConfigs": [],
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "/Users/donaldlu/.ohos/config/default_OhosCANNKit_miYBxfBfYWLQUTlxcSp0iGXZZYgJG80zkL3c3vuykvQ=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001BBA6C38007CE6A69FE1D425551F7EB46490BB8C4B87C85921526A2DCE36BBED0A03F3FEA2CF64A4",
+          "profile": "/Users/donaldlu/.ohos/config/default_OhosCANNKit_miYBxfBfYWLQUTlxcSp0iGXZZYgJG80zkL3c3vuykvQ=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "/Users/donaldlu/.ohos/config/default_OhosCANNKit_miYBxfBfYWLQUTlxcSp0iGXZZYgJG80zkL3c3vuykvQ=.p12",
+          "storePassword": "0000001BBDDF100C3A54BDD95A4BCC925BCA7F9FAC88264FFD4810D9956029DDAC53DD7A76BC7C5AC447C8"
+        }
+      }
+    ],
     "products": [
       {
         "name": "default",
@@ -35,6 +49,15 @@
           "applyToProducts": [
             "default"
           ]
+        }
+      ]
+    },
+    {
+      "name": "cannkit_cost",
+      "srcPath": "./cannkit_cost",
+      "targets": [
+        {
+          "name": "default"
         }
       ]
     }

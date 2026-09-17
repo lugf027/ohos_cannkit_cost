@@ -1,0 +1,3 @@
+# Keep exported page components and native bridge declarations.
+-keep
+./Index.ets

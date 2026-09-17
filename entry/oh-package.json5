@@ -5,6 +5,7 @@
   "main": "",
   "author": "",
   "license": "",
-  "dependencies": {}
+  "dependencies": {
+    "cannkit_cost": "file:../cannkit_cost"
+  }
 }
-
