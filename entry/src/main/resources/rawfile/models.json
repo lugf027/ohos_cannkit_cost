@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "source": "https://developer.huawei.com/consumer/cn/doc/doccenter-capabilities/cannkit-model-zoo",
+  "models": [
+    { "id": "alexnet", "name": "AlexNet", "file": "models/alexnet.om" },
+    { "id": "deeplabv3", "name": "DeepLabV3", "file": "models/deeplabv3.om" },
+    { "id": "fsr", "name": "FSR", "file": "models/fsr.om" },
+    { "id": "googlenet", "name": "GoogLeNet", "file": "models/googlenet.om" },
+    { "id": "inception_v3", "name": "Inception V3", "file": "models/inception_v3.om" },
+    { "id": "mobilenet_v1", "name": "MobileNet V1", "file": "models/mobilenet_v1.om" },
+    { "id": "mobilenet_v2", "name": "MobileNet V2", "file": "models/mobilenet_v2.om" },
+    { "id": "mobilenet_v2_1_4", "name": "MobileNet V2 1.4", "file": "models/mobilenet_v2_1_4.om" },
+    { "id": "mobilenet_v2_ssd", "name": "MobileNet V2 SSD", "file": "models/mobilenet_v2_ssd.om" },
+    { "id": "mobilenet_v3", "name": "MobileNet V3 Large", "file": "models/mobilenet_v3.om" },
+    { "id": "resnet18", "name": "ResNet-18", "file": "models/resnet18.om" },
+    { "id": "resnet50", "name": "ResNet-50", "file": "models/resnet50.om" },
+    { "id": "squeezenet_v1", "name": "SqueezeNet V1", "file": "models/squeezenet_v1.om" },
+    { "id": "vdsr", "name": "VDSR", "file": "models/vdsr.om" },
+    { "id": "yolov5", "name": "YOLOv5", "file": "models/yolov5.om" }
+  ]
+}
